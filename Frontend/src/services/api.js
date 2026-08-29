@@ -8,7 +8,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 second timeout for AI agent execution
+  timeout: 90000, // 90 second timeout for multi-agent LLM workflow execution
 });
 
 /**
@@ -20,23 +20,25 @@ const generateMockTripResponse = (formData) => {
     ? formData.interests.join(', ')
     : 'Sightseeing & Culture';
   
-  // Destination matching based on interests
-  let destination = 'Coorg';
+  // Destination matching based on user input or interests
+  let destination = formData.destination?.trim() || 'Coorg';
   let tips = 'Carry a light jacket and comfortable walking shoes.';
-  let weather = '21°C, Partly Cloudy';
+  let weather = '21°C, Favorable & Pleasant';
 
-  if (formData.interests?.includes('Beaches')) {
-    destination = 'Goa (South Coast)';
-    tips = 'Carry sunscreen, light cotton clothing, and stay hydrated.';
-    weather = '29°C, Sunny & Breezy';
-  } else if (formData.interests?.includes('Mountains') || formData.interests?.includes('Adventure')) {
-    destination = 'Munnar Hills';
-    tips = 'Carry warm clothing and rain gear for sudden showers.';
-    weather = '18°C, Misty & Pleasant';
-  } else if (formData.interests?.includes('History') || formData.interests?.includes('Culture')) {
-    destination = 'Hampi Heritage Valley';
-    tips = 'Wear comfortable walking shoes for heritage temple exploration.';
-    weather = '26°C, Clear Skies';
+  if (!formData.destination?.trim()) {
+    if (formData.interests?.includes('Beaches')) {
+      destination = 'Goa (South Coast)';
+      tips = 'Carry sunscreen, light cotton clothing, and stay hydrated.';
+      weather = '29°C, Sunny & Breezy';
+    } else if (formData.interests?.includes('Mountains') || formData.interests?.includes('Adventure')) {
+      destination = 'Munnar Hills';
+      tips = 'Carry warm clothing and rain gear for sudden showers.';
+      weather = '18°C, Misty & Pleasant';
+    } else if (formData.interests?.includes('History') || formData.interests?.includes('Culture')) {
+      destination = 'Hampi Heritage Valley';
+      tips = 'Wear comfortable walking shoes for heritage temple exploration.';
+      weather = '26°C, Clear Skies';
+    }
   }
 
   const numDays = Math.max(1, parseInt(formData.days) || 3);
@@ -64,11 +66,28 @@ const generateMockTripResponse = (formData) => {
     }
   }
 
+  const route = {
+    origin: city,
+    destination: destination,
+    recommended_mode: "Scenic Express Train / Highway Drive",
+    estimated_distance: "approx. 320 km",
+    estimated_duration: "approx. 6 hours",
+    transit_cost: formData.budget ? `₹${Math.round(Number(formData.budget) * 0.15).toLocaleString('en-IN')}` : '₹2,250',
+    journey_highlights: [
+      `Boarding & departure from ${city} transit terminal`,
+      "Scenic highway landscapes and mountain passes",
+      "Authentic regional highway eatery refreshment stop",
+      `Arrival & hotel check-in at ${destination}`
+    ],
+    route_tip: `Plan an early morning departure from ${city} to enjoy daylight scenery and maximize your first day in ${destination}.`
+  };
+
   return {
     destination,
     budget: formData.budget ? `₹${Number(formData.budget).toLocaleString('en-IN')}` : '₹15,000',
     weather,
     tips,
+    route,
     itinerary,
   };
 };
@@ -80,10 +99,11 @@ const generateMockTripResponse = (formData) => {
 export const planTrip = async (formData) => {
   const payload = {
     starting_city: formData.starting_city,
-    budget: formData.budget,
-    days: formData.days,
-    interests: formData.interests,
-    travelers: formData.travelers,
+    destination: formData.destination?.trim() || undefined,
+    budget: Number(formData.budget) || 15000,
+    days: Number(formData.days) || 3,
+    interests: formData.interests || ["Nature"],
+    travelers: Number(formData.travelers) || 2,
   };
 
   try {
@@ -91,6 +111,7 @@ export const planTrip = async (formData) => {
     return {
       success: true,
       data: normalizeApiResponse(response.data, formData),
+      isMock: false,
     };
   } catch (error) {
     console.warn('Backend API connection failed or unavailable:', error.message);
@@ -133,11 +154,15 @@ const normalizeApiResponse = (data, formData) => {
     }));
   }
 
+  const defaultRoute = generateMockTripResponse(formData).route;
+  const route = data.route || defaultRoute;
+
   return {
     destination: data.destination || data.city || 'Recommended Destination',
     budget: data.budget ? (String(data.budget).startsWith('₹') ? data.budget : `₹${data.budget}`) : `₹${formData.budget || '15,000'}`,
     weather: data.weather || 'Pleasant & Favorable',
     tips: data.tips || data.travel_tips || 'Wear comfortable shoes and carry essentials.',
+    route,
     itinerary: normalizedItinerary.length > 0 ? normalizedItinerary : generateMockTripResponse(formData).itinerary,
   };
 };

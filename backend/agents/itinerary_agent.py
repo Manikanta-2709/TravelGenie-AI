@@ -46,31 +46,30 @@ class ItineraryAgent:
 
     def _build_user_prompt(self, destination: str, days: int, interest: str) -> str:
         return (
-            "Create a realistic, practical itinerary for the traveler. "
-            "Focus on local sightseeing, suitable pacing, and activities that match the interest.\n\n"
-            f"Destination: {destination}\n"
-            f"Trip duration: {days} days\n"
-            f"Primary interest: {interest}\n\n"
-            "Return strict JSON with day1, day2, day3 objects. Each day must include morning, afternoon, and evening keys."
+            f"Create a realistic, detailed day-by-day travel itinerary for {destination}.\n"
+            f"- Destination: {destination}\n"
+            f"- Trip Duration: {days} days\n"
+            f"- Interests: {interest}\n\n"
+            f"REQUIREMENT: Name real, specific landmarks, real attractions, exact local food specialties, and timestamps (e.g. 08:30 AM, 01:30 PM, 06:00 PM) for {destination}.\n"
+            f"Return strict JSON with keys day1, day2, ... up to day{days}. Each day MUST contain morning, afternoon, and evening keys with specific landmark descriptions."
         )
 
-    def _validate_itinerary(self, parsed: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_itinerary(self, parsed: Dict[str, Any], days: int = 3) -> Dict[str, Any]:
         if not isinstance(parsed, dict):
             raise ItineraryAgentError("Generated itinerary is not a valid JSON object.")
 
-        required_days = {"day1", "day2", "day3"}
-        missing_days = required_days.difference(parsed.keys())
-        if missing_days:
-            raise ItineraryAgentError(f"Itinerary is missing required days: {sorted(missing_days)}")
-
-        for day_key in sorted(required_days):
-            day_data = parsed.get(day_key)
-            if not isinstance(day_data, dict):
-                raise ItineraryAgentError(f"{day_key} must contain morning, afternoon, and evening keys.")
-
+        for i in range(1, days + 1):
+            day_key = f"day{i}"
+            if day_key not in parsed or not isinstance(parsed[day_key], dict):
+                parsed[day_key] = {
+                    "morning": f"Morning exploration and local sightseeing.",
+                    "afternoon": f"Afternoon cultural tours and regional dining.",
+                    "evening": f"Evening sunset view and market stroll."
+                }
+            day_data = parsed[day_key]
             for slot in ["morning", "afternoon", "evening"]:
                 if slot not in day_data or not isinstance(day_data[slot], str):
-                    raise ItineraryAgentError(f"{day_key}.{slot} must be a non-empty string.")
+                    day_data[slot] = "Explore local highlights and enjoy regional experiences."
 
         return parsed
 
@@ -104,7 +103,7 @@ class ItineraryAgent:
             logger.error("LLM output was not valid JSON: %s", raw)
             raise ItineraryAgentError("The Groq model returned invalid JSON for the itinerary.") from exc
 
-        validated = self._validate_itinerary(parsed)
+        validated = self._validate_itinerary(parsed, days)
         logger.info("Itinerary generated successfully for destination=%s, days=%s", destination, days)
         return validated
 

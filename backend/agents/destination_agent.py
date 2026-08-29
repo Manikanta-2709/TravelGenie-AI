@@ -28,10 +28,20 @@ logger = logging.getLogger(__name__)
 class DestinationInput(BaseModel):
     """Input model for traveler preferences."""
 
-    city: str = Field(..., min_length=1, description="Source city of travel")
+    city: str = Field(default="", description="Source city of travel")
+    starting_city: str = Field(default="", description="Source city of travel")
+    destination: Union[str, None] = Field(default=None, description="Optional target destination requested by user")
     budget: float = Field(..., gt=0, description="Total travel budget in INR")
     days: int = Field(..., gt=0, description="Duration of the trip in days")
     interest: str = Field(..., min_length=1, description="Primary travel interest/theme")
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.city and self.starting_city:
+            self.city = self.starting_city
+        elif not self.starting_city and self.city:
+            self.starting_city = self.city
+        if not self.city:
+            raise ValueError("City or starting_city is required.")
 
 
 class DestinationOutput(BaseModel):
@@ -138,6 +148,15 @@ class DestinationAgent:
         except (ValidationError, ValueError) as exc:
             logger.error("Input validation failed: %s", exc)
             raise DestinationAgentError(f"Invalid travel preferences input: {exc}") from exc
+
+        # If user explicitly requested a target destination, return it immediately
+        if input_model.destination and input_model.destination.strip():
+            user_dest = input_model.destination.strip()
+            logger.info("Using target destination provided by user: %s", user_dest)
+            return DestinationOutput(
+                destination=user_dest,
+                reason=f"Target destination explicitly selected by traveler departing from {input_model.city}.",
+            )
 
         # 2. Prepare Prompts
         system_prompt = self._load_prompt_template()

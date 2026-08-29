@@ -56,10 +56,7 @@ class GroqService:
         self.timeout = timeout
 
         if not self.api_key:
-            logger.error("GROQ_API_KEY is not configured in environment or constructor.")
-            raise GroqAPIKeyError(
-                "GROQ_API_KEY is missing. Please set GROQ_API_KEY in your environment or .env file."
-            )
+            logger.warning("GROQ_API_KEY is not configured in environment or constructor.")
 
     def call_llm(
         self,
@@ -84,6 +81,11 @@ class GroqService:
         Raises:
             GroqServiceError: When request fails, times out, or returns invalid status.
         """
+        if not self.api_key:
+            raise GroqAPIKeyError(
+                "GROQ_API_KEY is missing. Please set GROQ_API_KEY in your environment or .env file."
+            )
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",

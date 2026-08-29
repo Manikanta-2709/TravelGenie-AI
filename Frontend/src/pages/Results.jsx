@@ -92,10 +92,11 @@ export default function Results() {
           budget={tripData.budget}
           weather={tripData.weather}
           tips={tripData.tips}
+          route={tripData.route}
         />
 
         {/* Day-by-Day Itinerary Component with interactive day tabs */}
-        <ItineraryCard itinerary={tripData.itinerary} />
+        <ItineraryCard itinerary={tripData.itinerary} destination={tripData.destination} />
 
         {/* Bottom CTA */}
         <div className="pt-6 text-center border-t border-[#214A47]">

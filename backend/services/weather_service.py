@@ -27,10 +27,13 @@ class WeatherService:
         self.session = session or requests.Session()
 
         if not self.api_key:
-            raise ValueError("OPENWEATHER_API_KEY is missing. Please set it in your environment or .env file.")
+            logger.warning("OPENWEATHER_API_KEY is missing.")
 
     def get_weather(self, city: str) -> Dict[str, Any]:
         """Return weather metadata for a given city as a JSON-compatible dict."""
+        if not self.api_key:
+            raise WeatherServiceError("OPENWEATHER_API_KEY is missing. Please set it in your environment or .env file.")
+
         if not city or not city.strip():
             raise ValueError("City name is required.")
 

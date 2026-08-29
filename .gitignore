@@ -39,3 +39,7 @@ node_modules/
 .env.local
 coverage/
 npm-debug.log
+
+# Databases
+*.db
+

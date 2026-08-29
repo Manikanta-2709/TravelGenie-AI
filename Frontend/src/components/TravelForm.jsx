@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Coins, Calendar, Users, Heart, ArrowRight, AlertCircle, Sparkles, Check } from 'lucide-react';
+import { MapPin, Compass, Coins, Calendar, Users, Heart, ArrowRight, AlertCircle, Sparkles, Check } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 
 const AVAILABLE_INTERESTS = [
@@ -193,34 +193,57 @@ export default function TravelForm({ onSubmit, isLoading, initialValues }) {
       {/* Main Form Fields Container */}
       <div className="bg-[#0B2426] border border-[#214A47] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
         
-        {/* Starting City */}
-        <div>
-          <label className="block text-sm font-bold text-white mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#35E6A1]" />
-              Starting City / Origin
-            </span>
-            <span className="text-xs text-[#B9C9C6] font-normal">Departure point</span>
-          </label>
-          <input
-            type="text"
-            name="starting_city"
-            value={formData.starting_city}
-            onChange={handleChange}
-            placeholder="e.g. Guntur, Hyderabad, Bengaluru, Chennai"
-            disabled={isLoading}
-            className={`w-full px-4 py-3 rounded-2xl bg-[#071A1D] border text-sm text-white placeholder-[#B9C9C6]/50 transition-all focus:outline-none focus:ring-2 ${
-              errors.starting_city
-                ? 'border-red-500/60 focus:ring-red-500/20 bg-red-950/20'
-                : 'border-[#214A47] focus:border-[#35E6A1] focus:ring-[#35E6A1]/20'
-            }`}
-          />
-          {errors.starting_city && (
-            <p className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5" />
-              {errors.starting_city}
-            </p>
-          )}
+        {/* Source & Destination Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Starting City / Source */}
+          <div>
+            <label className="block text-sm font-bold text-white mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#35E6A1]" />
+                Starting City / Source
+              </span>
+              <span className="text-xs text-[#B9C9C6] font-normal">Required</span>
+            </label>
+            <input
+              type="text"
+              name="starting_city"
+              value={formData.starting_city}
+              onChange={handleChange}
+              placeholder="e.g. Hyderabad, Bengaluru, Guntur"
+              disabled={isLoading}
+              className={`w-full px-4 py-3 rounded-2xl bg-[#071A1D] border text-sm text-white placeholder-[#B9C9C6]/50 transition-all focus:outline-none focus:ring-2 ${
+                errors.starting_city
+                  ? 'border-red-500/60 focus:ring-red-500/20 bg-red-950/20'
+                  : 'border-[#214A47] focus:border-[#35E6A1] focus:ring-[#35E6A1]/20'
+              }`}
+            />
+            {errors.starting_city && (
+              <p className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {errors.starting_city}
+              </p>
+            )}
+          </div>
+
+          {/* Desired Destination (Optional) */}
+          <div>
+            <label className="block text-sm font-bold text-white mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-[#4FFFC0]" />
+                Target Destination
+              </span>
+              <span className="text-xs text-[#35E6A1] font-semibold">Optional</span>
+            </label>
+            <input
+              type="text"
+              name="destination"
+              value={formData.destination || ''}
+              onChange={handleChange}
+              placeholder="e.g. Goa, Coorg, Manali (or leave blank for AI recommendation)"
+              disabled={isLoading}
+              className="w-full px-4 py-3 rounded-2xl bg-[#071A1D] border border-[#214A47] text-sm text-white placeholder-[#B9C9C6]/50 transition-all focus:outline-none focus:border-[#4FFFC0] focus:ring-[#4FFFC0]/20"
+            />
+          </div>
         </div>
 
         {/* Total Budget (Dual Slider & Input) */}

@@ -16,18 +16,61 @@ import {
   FileCheck,
   Shirt,
   Smartphone,
-  ShieldAlert
+  ShieldAlert,
+  Navigation,
+  ArrowRight,
+  Clock,
+  Train,
+  Car,
+  Milestone
 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 
 const DESTINATION_IMAGES = {
-  coorg: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80',
-  goa: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80',
-  manali: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80',
-  jaipur: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80',
-  munnar: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80',
-  hampi: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80',
-  default: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80',
+  coorg: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1400&q=80',
+  goa: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1400&q=80',
+  manali: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1400&q=80',
+  jaipur: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1400&q=80',
+  munnar: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1400&q=80',
+  hampi: 'https://images.unsplash.com/photo-1600100395938-f463a5aa9fb7?auto=format&fit=crop&w=1400&q=80',
+  araku: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80',
+  ooty: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1400&q=80',
+  shimla: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1400&q=80',
+  rishikesh: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80',
+  kerala: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1400&q=80',
+  udaipur: 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=1400&q=80',
+  ladakh: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=1400&q=80',
+  agra: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1400&q=80',
+  varanasi: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1400&q=80',
+  pondicherry: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1400&q=80',
+  darjeeling: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80',
+  alleppey: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1400&q=80',
+  gokarna: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80',
+  kodaikanal: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1400&q=80',
+  chikmagalur: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1400&q=80',
+  mysore: 'https://images.unsplash.com/photo-1600100395938-f463a5aa9fb7?auto=format&fit=crop&w=1400&q=80',
+  wayanad: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1400&q=80',
+  kashmir: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?auto=format&fit=crop&w=1400&q=80',
+  tirupati: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80',
+  vizag: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80',
+  hyderabad: 'https://images.unsplash.com/photo-1572445271230-a78b5944a659?auto=format&fit=crop&w=1400&q=80',
+  bengaluru: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1400&q=80',
+  delhi: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1400&q=80',
+  mumbai: 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=1400&q=80',
+  paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=80',
+  tokyo: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1400&q=80',
+  dubai: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=80',
+  default: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1400&q=80',
+};
+
+const getDestinationImageUrl = (dest) => {
+  if (!dest) return DESTINATION_IMAGES.default;
+  const lower = dest.toLowerCase();
+  const matchedKey = Object.keys(DESTINATION_IMAGES).find(k => lower.includes(k));
+  if (matchedKey) return DESTINATION_IMAGES[matchedKey];
+  
+  // Dynamic high-resolution travel image endpoint matching destination keywords
+  return `https://source.unsplash.com/1400x800/?${encodeURIComponent(dest)},travel,sightseeing`;
 };
 
 const INITIAL_PACKING_ITEMS = [
@@ -38,7 +81,7 @@ const INITIAL_PACKING_ITEMS = [
   { id: 5, text: 'Climate gear (Sunscreen SPF 50 / Rain poncho / Light fleece)', category: 'Essentials', checked: false },
 ];
 
-export default function ResultCard({ destination, budget, weather, tips }) {
+export default function ResultCard({ destination, budget, weather, tips, route }) {
   const { formatPrice, currency } = useCurrency();
   
   // Interactive Packing Checklist state
@@ -83,8 +126,7 @@ export default function ResultCard({ destination, budget, weather, tips }) {
   const packedCount = packingList.filter((item) => item.checked).length;
   const progressPercent = totalItems > 0 ? Math.round((packedCount / totalItems) * 100) : 0;
 
-  const destKey = Object.keys(DESTINATION_IMAGES).find(k => destination?.toLowerCase().includes(k)) || 'default';
-  const heroImage = DESTINATION_IMAGES[destKey];
+  const heroImage = getDestinationImageUrl(destination);
 
   return (
     <div className="space-y-6">
@@ -106,9 +148,11 @@ export default function ResultCard({ destination, budget, weather, tips }) {
         {/* Content over image */}
         <div className="relative z-10 p-6 sm:p-8 w-full flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#0B2426]/90 backdrop-blur-md border border-[#214A47] text-xs font-bold uppercase tracking-wider text-[#35E6A1]">
-              <Compass className="w-3.5 h-3.5 text-[#4FFFC0]" />
-              <span>Recommended Match</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0B2426]/90 backdrop-blur-md border border-[#214A47] text-xs font-bold uppercase tracking-wider text-[#35E6A1]">
+              <MapPin className="w-3.5 h-3.5 text-[#35E6A1]" />
+              <span>{route?.origin || 'Source'}</span>
+              <ArrowRight className="w-3 h-3 text-[#4FFFC0]" />
+              <span className="text-[#4FFFC0]">{destination || 'Destination'}</span>
             </div>
             
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-md">
@@ -116,7 +160,7 @@ export default function ResultCard({ destination, budget, weather, tips }) {
             </h2>
             
             <p className="text-xs sm:text-sm text-[#B9C9C6] max-w-lg leading-relaxed drop-shadow">
-              Synthesized by your 4 collaborative AI agents across budget, weather, and travel style.
+              Synthesized by your 4 collaborative AI agents for trip from <strong className="text-white">{route?.origin || 'Starting City'}</strong> to <strong className="text-[#35E6A1]">{destination}</strong>.
             </p>
           </div>
 
@@ -133,6 +177,103 @@ export default function ResultCard({ destination, budget, weather, tips }) {
           </div>
         </div>
       </div>
+
+      {/* 🚀 NEW FEATURE: JOURNEY & TRANSIT ROUTE EXPERIENCE (Start -> Destination) */}
+      {route && (
+        <div className="bg-[#0B2426] border border-[#214A47] rounded-3xl p-6 shadow-xl space-y-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#35E6A1]/5 blur-[80px] rounded-full pointer-events-none"></div>
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#214A47]/60 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-[#071A1D] border border-[#35E6A1]/40 flex items-center justify-center text-[#35E6A1]">
+                <Navigation className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white tracking-wide uppercase">
+                  Journey & Transit Route Experience
+                </h3>
+                <p className="text-xs text-[#B9C9C6]">
+                  Complete route breakdown from starting origin to destination
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-[#35E6A1] bg-[#071A1D] px-3 py-1 rounded-xl border border-[#214A47] self-start sm:self-auto">
+              Transit Cost: {route.transit_cost || '₹2,250'}
+            </span>
+          </div>
+
+          {/* Route Path Visualizer */}
+          <div className="bg-[#071A1D] border border-[#214A47] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Origin */}
+            <div className="flex items-center gap-3 text-center sm:text-left">
+              <div className="w-10 h-10 rounded-2xl bg-[#35E6A1]/10 border border-[#35E6A1]/40 text-[#35E6A1] flex items-center justify-center font-black">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#B9C9C6]/70">Starting Point</span>
+                <h4 className="text-base font-extrabold text-white">{route.origin || 'Origin'}</h4>
+              </div>
+            </div>
+
+            {/* Travel Line */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4 w-full sm:w-auto">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#35E6A1] mb-1">
+                <Train className="w-3.5 h-3.5" />
+                <span>{route.recommended_mode || 'Express Route'}</span>
+              </div>
+              <div className="relative w-full flex items-center justify-center">
+                <div className="w-full h-0.5 bg-gradient-to-r from-[#35E6A1] via-[#4FFFC0] to-[#35E6A1] rounded-full"></div>
+                <div className="absolute bg-[#071A1D] border border-[#35E6A1] text-[#35E6A1] px-2 py-0.5 rounded-full text-[10px] font-bold">
+                  {route.estimated_distance} • {route.estimated_duration}
+                </div>
+              </div>
+            </div>
+
+            {/* Destination */}
+            <div className="flex items-center gap-3 text-center sm:text-right">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#35E6A1]">Destination</span>
+                <h4 className="text-base font-extrabold text-white">{route.destination || destination}</h4>
+              </div>
+              <div className="w-10 h-10 rounded-2xl bg-[#4FFFC0]/10 border border-[#4FFFC0]/40 text-[#4FFFC0] flex items-center justify-center font-black">
+                <Compass className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Highlights & Route Advisory */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {/* Journey Highlights */}
+            {route.journey_highlights && route.journey_highlights.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-[#35E6A1] uppercase tracking-wider block">
+                  En-Route Journey Highlights
+                </span>
+                <ul className="space-y-1.5 text-xs text-[#B9C9C6]">
+                  {route.journey_highlights.map((highlight, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Milestone className="w-3.5 h-3.5 text-[#35E6A1] flex-shrink-0 mt-0.5" />
+                      <span>{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Route Travel Tip */}
+            {route.route_tip && (
+              <div className="p-3.5 rounded-2xl bg-[#071A1D] border border-[#214A47] text-xs text-[#B9C9C6] flex items-start gap-2.5">
+                <Lightbulb className="w-4 h-4 text-[#4FFFC0] flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-white block mb-0.5">Route Experience Tip</span>
+                  <p className="leading-relaxed">{route.route_tip}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 3 Metric Grid Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
