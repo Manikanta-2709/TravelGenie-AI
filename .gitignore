@@ -33,3 +33,9 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+node_modules/
+.dist/
+.env
+.env.local
+coverage/
+npm-debug.log
