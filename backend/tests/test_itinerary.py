@@ -39,8 +39,9 @@ def test_itinerary_agent_generates_valid_structure() -> None:
     result = agent.generate_itinerary("Coorg", 3, "Nature")
 
     assert set(result.keys()) == {"day1", "day2", "day3"}
-    assert set(result["day1"].keys()) == {"morning", "afternoon", "evening"}
-    assert "Coorg" not in result["day1"]["morning"] or True
+    assert {"morning", "afternoon", "evening"}.issubset(set(result["day1"].keys()))
+    assert "stay_location" in result["day1"]
+
 
 
 def test_itinerary_agent_rejects_invalid_days() -> None:

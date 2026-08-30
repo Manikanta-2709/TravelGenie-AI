@@ -398,6 +398,44 @@ export default function TravelForm({ onSubmit, isLoading, initialValues }) {
           )}
         </div>
 
+        {/* Preferred Travel Option (Optional Selection) */}
+        <div>
+          <label className="block text-sm font-bold text-white mb-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Compass className="w-4 h-4 text-[#35E6A1]" />
+              Preferred Travel Option (Transit Mode)
+            </span>
+            <span className="text-xs text-[#B9C9C6] font-normal">Optional</span>
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {[
+              { id: '', label: 'Any Mode', icon: '⚡' },
+              { id: 'Train', label: 'Train', icon: '🚆' },
+              { id: 'Flight', label: 'Flight', icon: '✈️' },
+              { id: 'Bus', label: 'Bus', icon: '🚌' },
+              { id: 'Drive', label: 'Road Trip', icon: '🚗' },
+            ].map((mode) => {
+              const isSelected = (formData.preferred_travel_mode || '') === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, preferred_travel_mode: mode.id }))}
+                  disabled={isLoading}
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#35E6A1] text-[#071A1D] border-[#35E6A1] shadow-lg shadow-[#35E6A1]/20 font-black scale-105'
+                      : 'bg-[#071A1D] hover:bg-[#071A1D]/80 text-[#B9C9C6] border-[#214A47] hover:border-[#35E6A1]/60'
+                  }`}
+                >
+                  <span className="text-lg mb-0.5">{mode.icon}</span>
+                  <span className="text-[11px] whitespace-nowrap">{mode.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Live Calculation Widget */}
         <div className="p-4 rounded-2xl bg-[#071A1D] border border-[#214A47] flex items-center justify-between text-xs text-[#B9C9C6]">
           <div>
@@ -409,6 +447,7 @@ export default function TravelForm({ onSubmit, isLoading, initialValues }) {
             Agent Ready
           </span>
         </div>
+
 
         {/* Submit Action */}
         <div className="pt-2">

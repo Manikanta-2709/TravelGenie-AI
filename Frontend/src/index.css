@@ -59,6 +59,65 @@
   animation: float 4s ease-in-out infinite;
 }
 
+/* ── Compact Dashboard: Accordion Transitions ─────────────────────── */
+
+/* Chevron rotation */
+.accordion-chevron {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.accordion-chevron.rotate {
+  transform: rotate(180deg);
+}
+
+/* Panel reveal animation */
+@keyframes accordionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.accordion-panel-open {
+  animation: accordionReveal 0.28s ease-out;
+}
+
+/* Grid-rows accordion (smooth height animation for day panels) */
+.accordion-grid-cols {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.accordion-grid-cols.open {
+  grid-template-rows: 1fr;
+}
+.accordion-grid-cols > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Hidden scrollbars for pill/filter rows */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Simplify emerald glow for compact cards */
+@media (prefers-reduced-motion: reduce) {
+  .accordion-panel-open,
+  .accordion-chevron,
+  .animate-emerald-glow,
+  .animate-float {
+    animation: none;
+    transition: none;
+  }
+}
+
 /* Custom Scrollbar in Dark Teal */
 ::-webkit-scrollbar {
   width: 6px;

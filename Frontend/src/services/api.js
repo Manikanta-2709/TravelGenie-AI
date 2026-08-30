@@ -1,172 +1,214 @@
+/**
+ * TravelGenie AI — API client.
+ *
+ * No saved data, no mock generator: every plan comes from the backend,
+ * which fetches everything live (Open-Meteo, OSRM, Wikipedia, Wikivoyage,
+ * Groq LLM) and returns the V2 dashboard schema directly.
+ */
+
 import axios from 'axios';
 
-// Backend Base URL
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 90000, // 90 second timeout for multi-agent LLM workflow execution
+  timeout: 120000, // live web fetching (geocoding, routing, LLM) can take a while
+  headers: { 'Content-Type': 'application/json' },
 });
 
-/**
- * Fallback generator in case the backend server is not running during local frontend testing.
- */
-const generateMockTripResponse = (formData) => {
-  const city = formData.starting_city || 'Your City';
-  const interestsList = formData.interests && formData.interests.length > 0
-    ? formData.interests.join(', ')
-    : 'Sightseeing & Culture';
-  
-  // Destination matching based on user input or interests
-  let destination = formData.destination?.trim() || 'Coorg';
-  let tips = 'Carry a light jacket and comfortable walking shoes.';
-  let weather = '21°C, Favorable & Pleasant';
+/* ──────────────── V2 safety helpers ──────────────── */
 
-  if (!formData.destination?.trim()) {
-    if (formData.interests?.includes('Beaches')) {
-      destination = 'Goa (South Coast)';
-      tips = 'Carry sunscreen, light cotton clothing, and stay hydrated.';
-      weather = '29°C, Sunny & Breezy';
-    } else if (formData.interests?.includes('Mountains') || formData.interests?.includes('Adventure')) {
-      destination = 'Munnar Hills';
-      tips = 'Carry warm clothing and rain gear for sudden showers.';
-      weather = '18°C, Misty & Pleasant';
-    } else if (formData.interests?.includes('History') || formData.interests?.includes('Culture')) {
-      destination = 'Hampi Heritage Valley';
-      tips = 'Wear comfortable walking shoes for heritage temple exploration.';
-      weather = '26°C, Clear Skies';
-    }
-  }
+const asArray = (v) => (Array.isArray(v) ? v : []);
+const asObject = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+const asString = (v, fallback = '') =>
+  typeof v === 'string' && v.trim() ? v.trim() : typeof v === 'number' ? String(v) : fallback;
+const asNumber = (v, fallback = 0) => {
+  const n = typeof v === 'string' ? parseFloat(v.replace(/[^0-9.]/g, '')) : Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
 
-  const numDays = Math.max(1, parseInt(formData.days) || 3);
-  const itinerary = [];
+const mapsLink = (name, lat, lng) =>
+  lat != null && lng != null
+    ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name || '')}`;
 
-  for (let i = 1; i <= numDays; i++) {
-    if (i === 1) {
-      itinerary.push({
-        day: 1,
-        title: `Arrival & Local Discovery`,
-        description: `Depart from ${city} and arrive at ${destination}. Check into your stay, relax, and explore the nearby local market and sunset viewpoint.`
-      });
-    } else if (i === numDays) {
-      itinerary.push({
-        day: i,
-        title: `Sightseeing & Farewell`,
-        description: `Visit the top scenic viewpoint, shop for local souvenirs and authentic regional treats, before your return journey back to ${city}.`
-      });
-    } else {
-      itinerary.push({
-        day: i,
-        title: `Deep Dive: ${formData.interests?.[i % (formData.interests.length || 1)] || 'Exploration'}`,
-        description: `Full day dedicated to enjoying ${interestsList}. Experience guided local tours, regional cuisine sampling, and iconic nature landscapes.`
-      });
-    }
-  }
-
-  const route = {
-    origin: city,
-    destination: destination,
-    recommended_mode: "Scenic Express Train / Highway Drive",
-    estimated_distance: "approx. 320 km",
-    estimated_duration: "approx. 6 hours",
-    transit_cost: formData.budget ? `₹${Math.round(Number(formData.budget) * 0.15).toLocaleString('en-IN')}` : '₹2,250',
-    journey_highlights: [
-      `Boarding & departure from ${city} transit terminal`,
-      "Scenic highway landscapes and mountain passes",
-      "Authentic regional highway eatery refreshment stop",
-      `Arrival & hotel check-in at ${destination}`
-    ],
-    route_tip: `Plan an early morning departure from ${city} to enjoy daylight scenery and maximize your first day in ${destination}.`
-  };
-
+/** Normalize a place into the compact shape AccordionItinerary expects. */
+const normalizePlace = (p) => {
+  const o = asObject(p);
+  const name = asString(o.name ?? o.place ?? o.title, '');
+  if (!name) return null;
+  const lat = o.lat ?? o.latitude;
+  const lng = o.lng ?? o.lon ?? o.longitude;
   return {
-    destination,
-    budget: formData.budget ? `₹${Number(formData.budget).toLocaleString('en-IN')}` : '₹15,000',
-    weather,
-    tips,
-    route,
-    itinerary,
+    name,
+    category: asString(o.category ?? o.type, 'attraction'),
+    lat: lat != null ? asNumber(lat) : null,
+    lng: lng != null ? asNumber(lng) : null,
+    maps_url: asString(o.maps_url, mapsLink(name, lat, lng)),
+    travel_from_prev: asString(o.travel_from_prev ?? o.travel_time ?? o.duration_from_prev, ''),
+    geo_source: asString(o.geo_source, ''),
   };
 };
 
-/**
- * Plan trip API call
- * Sends user travel preferences to the backend AI agent pipeline.
- */
+/** Normalize one itinerary day (morning/afternoon/evening slots). */
+const normalizeItineraryDay = (day, index) => {
+  const o = asObject(day);
+  const normalizeSlot = (slot) => {
+    const s = asObject(slot);
+    const summary = asString(s.summary ?? s.description ?? s.text, '');
+    const places = asArray(s.places).map(normalizePlace).filter(Boolean);
+    if (!summary && !places.length && typeof slot === 'string') {
+      return { summary: slot, places: [] };
+    }
+    return { summary, places };
+  };
+
+  const slots = {
+    morning: normalizeSlot(o.morning),
+    afternoon: normalizeSlot(o.afternoon),
+    evening: normalizeSlot(o.evening),
+  };
+  const placeCount =
+    asNumber(o.place_count, 0) ||
+    Object.values(slots).reduce((n, s) => n + s.places.length, 0);
+
+  return {
+    day: asNumber(o.day, index + 1),
+    title: asString(o.title, `Day ${asNumber(o.day, index + 1)}`),
+    place_count: placeCount,
+    walking_km: o.walking_km != null ? asNumber(o.walking_km) : null,
+    walking_time: asString(o.walking_time, ''),
+    stay_location: asString(o.stay_location, ''),
+    ...slots,
+  };
+};
+
+/** Defensive normalization of the backend's V2 response. */
+const normalizeApiResponse = (data) => {
+  const d = asObject(data);
+  const hero = asObject(d.hero);
+  const overview = asObject(d.overview);
+  const metrics = asObject(d.metrics);
+  const recommendations = asObject(d.recommendations);
+  const route = asObject(d.route);
+
+  const normalizedTransport = asArray(d.transport).map((t) => {
+    const o = asObject(t);
+    return {
+      ...o,
+      mode: asString(o.mode ?? o.transport_mode, 'train'),
+      title: asString(o.title ?? o.name, 'Travel option'),
+      duration: asString(o.duration ?? o.estimated_duration, ''),
+      fare: asString(o.fare ?? o.estimated_fare ?? o.price, ''),
+      booking_url: asString(o.booking_url, asString(o.url)),
+      maps_url: asString(o.maps_url),
+      recommended: Boolean(o.recommended),
+    };
+  });
+
+  return {
+    status: asString(d.status, 'ok'),
+    warnings: asArray(d.warnings),
+    hero: {
+      destination: asString(hero.destination, 'Your Destination'),
+      tagline: asString(hero.tagline),
+      image_url: asString(hero.image_url),
+      trip_score: asNumber(hero.trip_score, 0),
+      origin: asString(hero.origin),
+      distance_km: asNumber(hero.distance_km ?? route.distance_km, 0),
+      distance_label: asString(hero.distance_label ?? route.distance_label, ''),
+      duration: asString(hero.duration, asString(route.duration_label, '')),
+      travelers: asNumber(hero.travelers, 1),
+      maps_url: asString(hero.maps_url),
+    },
+    overview: {
+      budget: asObject(overview.budget),
+      weather: asObject(overview.weather),
+      best_time: asString(overview.best_time),
+      ai_score: asNumber(overview.ai_score, asNumber(hero.trip_score, 0)),
+      route_efficiency: asNumber(overview.route_efficiency, asNumber(metrics.route_efficiency, 0)),
+    },
+    route: {
+      origin: asString(route.origin ?? hero.origin, ''),
+      destination: asString(route.destination ?? hero.destination, ''),
+      distance_km: asNumber(route.distance_km ?? hero.distance_km, 0),
+      duration_min: asNumber(route.duration_min ?? hero.duration_min, 0),
+      estimated_distance: asString(route.estimated_distance, ''),
+      recommended_mode: asString(route.recommended_mode, ''),
+      directions_url: asString(route.directions_url, ''),
+      travel_options: normalizedTransport,
+    },
+    transport: normalizedTransport,
+    hotels: asArray(d.hotels).map((h) => {
+      const o = asObject(h);
+      return {
+        ...o,
+        name: asString(o.name, 'Hotel'),
+        maps_url: asString(o.maps_url, mapsLink(asString(o.name), null, null)),
+        booking_url: asString(o.booking_url, asString(o.maps_url)),
+      };
+    }),
+    itinerary: asArray(d.itinerary).map(normalizeItineraryDay),
+    recommendations: {
+      food: asArray(recommendations.food).map(String),
+      hidden_gems: asArray(recommendations.hidden_gems).map(String),
+      shopping: asArray(recommendations.shopping).map(String),
+      safety_tips: asArray(recommendations.safety_tips).map(String),
+    },
+    metrics: {
+      route_efficiency: asNumber(metrics.route_efficiency, 0),
+      walking_km: asNumber(metrics.walking_km, 0),
+      transport_hours: asNumber(metrics.transport_hours, 0),
+      ai_score: asNumber(metrics.ai_score, 0),
+    },
+  };
+};
+
+/* ──────────────── Public API ──────────────── */
+
 export const planTrip = async (formData) => {
   const payload = {
-    starting_city: formData.starting_city,
-    destination: formData.destination?.trim() || undefined,
+    starting_city: formData.startingCity || formData.starting_city || '',
+    destination: formData.destination || '',
     budget: Number(formData.budget) || 15000,
     days: Number(formData.days) || 3,
-    interests: formData.interests || ["Nature"],
     travelers: Number(formData.travelers) || 2,
+    interests: Array.isArray(formData.interests)
+      ? formData.interests
+      : String(formData.interests || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+    preferred_travel_mode: formData.preferredTravelMode || formData.preferred_travel_mode || null,
   };
 
   try {
-    const response = await apiClient.post('/plan-trip', payload);
+    const { data } = await apiClient.post('/plan-trip', payload);
+    const normalized = normalizeApiResponse(data);
     return {
       success: true,
-      data: normalizeApiResponse(response.data, formData),
+      data: normalized,
       isMock: false,
+      warning: Array.isArray(normalized.warnings) && normalized.warnings.length ? normalized.warnings[0] : '',
+      ...normalized,
     };
   } catch (error) {
-    console.warn('Backend API connection failed or unavailable:', error.message);
-    
-    // In local development/demo mode, if backend is offline, return synthesized realistic fallback
-    const fallbackData = generateMockTripResponse(formData);
-    return {
-      success: true,
-      data: fallbackData,
-      isMock: true,
-      warning: 'Displayed using local agent simulator (Backend offline at http://localhost:8000/plan-trip).'
-    };
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Planning took too long — the backend fetches live web data. Please try again.');
+    }
+    if (error.response) {
+      const detail = typeof error.response.data?.detail === 'string'
+        ? error.response.data.detail
+        : 'The planner could not process this trip.';
+      throw new Error(detail);
+    }
+    throw new Error('Cannot reach the TravelGenie backend. Is it running on ' + API_BASE_URL + '?');
   }
 };
 
-/**
- * Normalizes backend response data to ensure consistency across varying backend formats
- */
-const normalizeApiResponse = (data, formData) => {
-  if (!data) return generateMockTripResponse(formData);
-
-  // Normalize itinerary into an array of objects { day, description }
-  let normalizedItinerary = [];
-  if (Array.isArray(data.itinerary)) {
-    normalizedItinerary = data.itinerary.map((item, index) => {
-      if (typeof item === 'string') {
-        return { day: index + 1, description: item };
-      }
-      return {
-        day: item.day || index + 1,
-        title: item.title || `Day ${item.day || index + 1}`,
-        description: item.description || item.activity || JSON.stringify(item),
-      };
-    });
-  } else if (typeof data.itinerary === 'object' && data.itinerary !== null) {
-    normalizedItinerary = Object.entries(data.itinerary).map(([key, val], idx) => ({
-      day: idx + 1,
-      title: key,
-      description: typeof val === 'string' ? val : JSON.stringify(val),
-    }));
-  }
-
-  const defaultRoute = generateMockTripResponse(formData).route;
-  const route = data.route || defaultRoute;
-
-  return {
-    destination: data.destination || data.city || 'Recommended Destination',
-    budget: data.budget ? (String(data.budget).startsWith('₹') ? data.budget : `₹${data.budget}`) : `₹${formData.budget || '15,000'}`,
-    weather: data.weather || 'Pleasant & Favorable',
-    tips: data.tips || data.travel_tips || 'Wear comfortable shoes and carry essentials.',
-    route,
-    itinerary: normalizedItinerary.length > 0 ? normalizedItinerary : generateMockTripResponse(formData).itinerary,
-  };
+export const checkHealth = async () => {
+  const { data } = await apiClient.get('/health');
+  return data;
 };
 
-export default {
-  planTrip,
-};
+export default { planTrip, checkHealth };

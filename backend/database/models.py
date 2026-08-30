@@ -20,6 +20,7 @@ class TravelPlan(Base):
     weather = Column(String, nullable=False)
     tips = Column(Text, nullable=False)
     route = Column(JSON, nullable=True)
+    stays = Column(JSON, nullable=True)
     itinerary = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -37,6 +38,8 @@ class TravelPlan(Base):
             "weather": self.weather,
             "tips": self.tips,
             "route": self.route,
+            "stays": self.stays,
             "itinerary": self.itinerary,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+

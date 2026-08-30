@@ -11,8 +11,10 @@ import {
   Sunset,
   Sparkles,
   Utensils,
-  Camera
+  Camera,
+  Building2
 } from 'lucide-react';
+
 
 const DAY_IMAGE_POOL = [
   'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1000&q=80',
@@ -321,8 +323,27 @@ export default function ItineraryCard({ itinerary = [], destination = '' }) {
                   })}
                 </div>
 
+                {/* Overnight Stay Location Badge */}
+                {item.stay_location && (
+                  <div className="p-3.5 rounded-2xl bg-[#0B2426] border border-[#214A47] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-[#071A1D] border border-[#35E6A1]/40 flex items-center justify-center text-[#35E6A1]">
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-[#35E6A1] block">Day {dayNum} Overnight Stay Base</span>
+                        <h5 className="text-xs font-black text-white">{item.stay_location}</h5>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-[#B9C9C6] bg-[#071A1D] px-2.5 py-1 rounded-lg border border-[#214A47]">
+                      Verified Location
+                    </span>
+                  </div>
+                )}
+
                 {/* Footer Badges */}
                 <div className="pt-3 flex flex-wrap items-center justify-between gap-4 text-[11px] text-[#B9C9C6]/60 border-t border-[#214A47]">
+
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-[#4FFFC0]" />
                     Optimized Pacing & Travel Duration

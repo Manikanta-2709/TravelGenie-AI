@@ -36,13 +36,16 @@ export default function Planner() {
       // Brief delay to show completion transition
       setTimeout(() => {
         setIsLoading(false);
-        if (response && response.success && response.data) {
+        const tripData = response?.data ?? response;
+        const isValidTrip = tripData && typeof tripData === 'object' && (tripData.hero || tripData.overview || tripData.itinerary);
+
+        if (isValidTrip) {
           navigate('/results', {
             state: {
-              tripData: response.data,
+              tripData,
               formData,
-              isMock: response.isMock || false,
-              warning: response.warning || '',
+              isMock: Boolean(response?.isMock || false),
+              warning: response?.warning || '',
             },
           });
         } else {

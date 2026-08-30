@@ -24,7 +24,9 @@ Base = declarative_base()
 
 def init_db() -> None:
     """Initialize database tables."""
+    import backend.database.models  # noqa: F401 Ensure models are registered with Base.metadata
     Base.metadata.create_all(bind=engine)
+
 
 
 def get_db() -> Generator[Session, None, None]:
