@@ -44,6 +44,6 @@ class TripPlanResponse(BaseModel):
     transport: List[Dict[str, Any]] = Field(default_factory=list)
     hotels: List[Dict[str, Any]] = Field(default_factory=list)
     itinerary: List[Dict[str, Any]] = Field(default_factory=list)
-    recommendations: Dict[str, List[str]] = Field(default_factory=dict)
+    recommendations: Dict[str, List[Any]] = Field(default_factory=dict)
     metrics: Dict[str, Any] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
