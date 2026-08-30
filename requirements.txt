@@ -7,4 +7,3 @@ requests
 python-dotenv
 langgraph
 httpx
-pytest

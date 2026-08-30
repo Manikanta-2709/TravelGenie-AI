@@ -2,7 +2,6 @@
   command = "npm run build"
   publish = "dist"
 
-# Enable React Router single page app client-side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
